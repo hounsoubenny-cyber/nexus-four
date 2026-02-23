@@ -1,0 +1,4 @@
+sentence-transformers==5.2.2
+pypdf==6.7.0
+pypdfium2==5.3.0
+beautifulsoup4==4.14.2

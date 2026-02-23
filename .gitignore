@@ -1,0 +1,41 @@
+# ===== MODÈLES IA (trop lourds) =====
+**/*.gguf
+conversation_app/chat_nexus/MODEL/
+conversation_app/chat_nexus/MODEL_DEMO/
+
+# ===== EMBEDDING =====
+conversation_app/chat_nexus/EMBEDDING/
+
+# ===== INDEX FAISS =====
+conversation_app/chat_nexus/index/
+conversation_app/chat_nexus/Index_Backup/
+
+# ===== DOCUMENTS IFRI =====
+conversation_app/chat_nexus/DOCS_IFRI/
+
+# ===== FICHIERS UPLOADÉS / MÉDIAS =====
+conversation_app/fastapi_mount/files/
+conversation_app/fastapi_mount/nexus_files/
+conversation_app/fastapi_mount/hub/
+conversation_app/fastapi_mount/profile_img/
+conversation_app/fastapi_mount/fastapi_mount/
+
+# ===== CACHE =====
+__pycache__/
+*.pyc
+*.pyo
+conversation_app/var/
+
+# ===== ENVIRONNEMENT / SECRETS =====
+.env
+.env.*
+*.key
+*.pem
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== LOGS =====
+*.log
+logs/

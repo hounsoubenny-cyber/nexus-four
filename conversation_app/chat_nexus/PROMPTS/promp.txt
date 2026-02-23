@@ -1,0 +1,274 @@
+**Parfait Benny !** Voici les formats de prompt **exacts et Ã  jour (2026)** pour les 3 familles que tu utilises le plus souvent avec llama.cpp / GGUF.
+
+Je te donne :
+- Le format **complet** (avec system + user + assistant)
+- Le format **simplifiÃ©** (celui que tu peux copier-colle direct dans ton `custom_generate`)
+- Un exemple avec ta phrase Â« NOTE IMPORTANTE: rÃ©ponds en FRANCAIS. Â»
+
+### 1. Phi-3.5-mini-instruct (et tous les Phi-3 / Phi-3.5)
+
+**Format officiel (celui qui marche le mieux) :**
+
+```python
+prompt = f"""<|system|>
+Tu es un assistant utile, intelligent et prÃ©cis.<|end|>
+<|user|>
+{user_input}
+
+NOTE IMPORTANTE: rÃ©ponds en FRANCAIS.<|end|>
+<|assistant|>
+"""
+```
+
+**Version ultra-simple (la plus utilisÃ©e dans les GGUF bartowski) :**
+
+```python
+prompt = f"<|user|>\n{user_input}\n\nNOTE IMPORTANTE: rÃ©ponds en FRANCAIS.<|end|>\n<|assistant|>\n"
+```
+
+Câest celle que jâutilise 90 % du temps avec Phi-3.5 Q8_0 â elle est trÃ¨s stable.
+
+### 2. Qwen2.5-7B-Instruct (et Qwen3)
+
+**Format officiel (le plus puissant) :**
+
+```python
+prompt = f"""<|im_start|>system
+Tu es Qwen, un assistant utile crÃ©Ã© par Alibaba Cloud.<|im_end|>
+<|im_start|>user
+{user_input}
+
+NOTE IMPORTANTE: rÃ©ponds en FRANCAIS.<|im_end|>
+<|im_start|>assistant
+"""
+```
+
+**Version courte (marche trÃ¨s bien aussi) :**
+
+```python
+prompt = f"""<|im_start|>user
+{user_input}
+
+NOTE IMPORTANTE: rÃ©ponds en FRANCAIS.<|im_end|>
+<|im_start|>assistant
+"""
+```
+
+Qwen adore avoir le `<|im_start|>` et `<|im_end|>` â câest ce qui le rend si bon en franÃ§ais et en code.
+
+### 3. Mistral (Nemo, Small 3.x, Devstral, etc.)
+
+Les Mistral rÃ©cents ont changÃ© un peu, mais voilÃ  ce qui marche le mieux en 2026 avec GGUF :
+
+**Format pour Mistral-Nemo-Instruct-2407 / Mistral Small :**
+
+```python
+prompt = f"""<s>[INST] {user_input}
+
+NOTE IMPORTANTE: rÃ©ponds en FRANCAIS. [/INST]"""
+```
+
+**Version avec system (recommandÃ©e pour meilleure qualitÃ©) :**
+
+```python
+prompt = f"""<s>[INST] Tu es un assistant utile et prÃ©cis.
+
+{user_input}
+
+NOTE IMPORTANTE: rÃ©ponds en FRANCAIS. [/INST]"""
+```
+
+Pour les multi-tours (conversation longue), on fait comme Ã§a :
+
+```python
+prompt = f"""<s>[INST] {premiÃ¨re_question} [/INST] {rÃ©ponse_prÃ©cÃ©dente} </s><s>[INST] {nouvelle_question}
+
+NOTE IMPORTANTE: rÃ©ponds en FRANCAIS. [/INST]"""
+```
+
+### RÃ©sumÃ© rapide (copie-colle direct)
+
+| ModÃ¨le              | Prompt simplifiÃ© (Ã  mettre dans custom_generate)                                                                 |
+|---------------------|-------------------------------------------------------------------------------------------------------------------|
+| **Phi-3.5**         | `"<|user|>\n" + user + "\n\nNOTE... FRANCAIS.<|end|>\n<|assistant|>\n"`                                           |
+| **Qwen2.5**         | `"<|im_start|>user\n" + user + "\n\nNOTE... FRANCAIS.<|im_end|>\n<|im_start|>assistant\n"`                       |
+| **Mistral (Nemo)**  | `"<s>[INST] " + user + "\n\nNOTE... FRANCAIS. [/INST]"`                                                          |
+
+Tu veux que je te refasse ton `custom_generate()` complet avec les 3 formats en fonction du modÃ¨le (genre une fonction qui dÃ©tecte automatiquement) ? Ou tu prÃ©fÃ¨res que je te donne juste les 3 versions prÃªtes Ã  lâemploi ?
+
+Dis-moi lequel tu testes en premier (Phi, Qwen ou Mistral) et on ajuste direct ð¥
+
+# Mistral / Mixtral
+prompt = f"<s>[INST] {user_input} [/INST]"
+
+# Avec systÃ¨me
+prompt = f"<s>[INST] <<SYS>>\n{system}\n<</SYS>>\n\n{user_input} [/INST]"
+
+# Qwen / ChatML
+prompt = f"<|im_start|>user\n{user_input}<|im_end|>\n<|im_start|>assistant\n"
+
+# Phi-3
+prompt = f"<|user|>\n{user_input}\n<|assistant|>\n"
+
+# Llama 3
+prompt = f"<|begin_of_text|><|start_header_id|>user<|end_header_id|>\n\n{user_input}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
+
+
+# Gemma n'a PAS de system prompt !
+# Template spécial à ajouter dans chat.py
+
+self.stops_words["gemma"] = ["<end_of_turn>", "<start_of_turn>"]
+
+# Dans handle_history_and_prompt():
+elif "gemma" in self.model_name:
+    # Gemma ignore le system prompt → on l'intègre au 1er user message
+    first_message = True
+    for key in to_take:
+        if "user" in key:
+            if first_message:
+                # Intègre system dans 1er message
+                to_return += f"<start_of_turn>user\n{self.sys_instruction}\n\n{caches[key]}<end_of_turn>\n"
+                first_message = False
+            else:
+                to_return += f"<start_of_turn>user\n{caches[key]}<end_of_turn>\n"
+        else:
+            to_return += f"<start_of_turn>model\n{caches[key]}<end_of_turn>\n"
+    to_return += f"<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"
+```
+
+---
+
+## 💚 CARE + HUB - SYNERGIES INTELLIGENTES
+```
+TA VISION EST PARFAITE. Voici comment tout s'articule :
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CARE → BRAIN : L'IA sait comment tu vas
+
+  Etudiant stressé (mood ≤ 4)
+       ↓
+  Frontend envoie mood dans le chat
+       ↓
+  Backend ajoute au system prompt:
+  "⚠️ Étudiant en difficulté (mood: 3/10).
+   Mode Coach OBLIGATOIRE."
+       ↓
+  Nexus répond avec douceur automatiquement
+
+  MAIS TU AS EU UNE IDÉE BRILLANTE:
+  "Si stressé → proposer une histoire ou discuter"
+
+  Implémentation:
+
+  if mood <= 4:
+      options = [
+        "💬 Parler de ce qui me stresse",
+        "📖 Me raconter une histoire relaxante",  
+        "🧘 Technique de relaxation guidée",
+        "🎮 Mini-jeu de décompression"
+      ]
+  
+  L'user choisit → chat spécialisé démarre !
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+HUB → BRAIN : "Tu as des problèmes en maths ?"
+
+  FLUX COMPLET:
+
+  1. L'étudiant pose beaucoup de questions maths à Nexus
+     Brain détecte: "SQL", "Python", "Réseau" 
+     → topics fréquents sauvegardés dans son profil
+  
+  2. Profil Hub de l'étudiant:
+     {
+       "username": "samuel",
+       "skills": ["JavaScript", "React", "FastAPI"],
+       "needs": ["Maths", "Algo"],   ← détecté par Brain
+       "points": 127
+     }
+  
+  3. Quand quelqu'un cherche un tuteur:
+     "Je cherche un tuteur React"
+     → Hub cherche skills["React"]
+     → Trouve samuel
+     → Recommande samuel !
+  
+  4. Samuel cherche de l'aide en maths:
+     → Hub cherche qui a "Maths" dans skills
+     → Recommande ces étudiants
+     → Et Nexus Brain propose directement !
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BRAIN → HUB : Recommandation intelligente
+
+  Dans Nexus Brain, quand détecte difficulté:
+
+  def detect_topic_difficulty(self, question, history):
+      # Si même topic posé 3+ fois → difficulté détectée
+      topic_counts = {}
+      for msg in history:
+          for topic in TOPICS:  # ["math", "sql", "réseau"...]
+              if topic in msg.lower():
+                  topic_counts[topic] = topic_counts.get(topic, 0) + 1
+      
+      struggling_topics = [
+          t for t, count in topic_counts.items() 
+          if count >= 3
+      ]
+      return struggling_topics
+  
+  # Réponse Nexus:
+  "Je vois que tu poses beaucoup de questions sur les maths 📚
+   Tu veux que je te recommande un tuteur disponible sur le Hub ?
+   [Voir les tuteurs maths] ← Bouton qui ouvre Hub filtré"
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+# Dans ton chat.py, ajoute ce template:
+# PAS de <|system|>, le system s'intègre dans le 1er user message
+
+elif "gemma" in self.model_name:
+    # Gemma: system intégré dans le premier message user
+    system_injected = False
+    for key in to_take:
+        if "user" in key:
+            if not system_injected:
+                to_return += (
+                    f"<start_of_turn>user\n"
+                    f"{self.sys_instruction}\n\n"  # System ici !
+                    f"CONTEXT: {ctx}\n\n"
+                    f"{caches[key]}<end_of_turn>\n"
+                    f"<start_of_turn>model\n<end_of_turn>\n"
+                )
+                system_injected = True
+            else:
+                to_return += f"<start_of_turn>user\n{caches[key]}<end_of_turn>\n<start_of_turn>model\n<end_of_turn>\n"
+        else:
+            to_return += f"<start_of_turn>model\n{caches[key]}<end_of_turn>\n"
+    
+    to_return += f"<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"
+
+# Stop words Gemma:
+self.stops_words["gemma"] = ["<end_of_turn>", "<start_of_turn>"]
+```
+
+---
+
+## 📝 RÉSUMÉ DES 3 TEMPLATES (dans ton code)
+```
+Qwen  → <|im_start|>system ... <|im_end|>   ✅ Déjà dans ton code
+Phi   → <|system|> ... <|end|>               ✅ Déjà dans ton code
+Gemma → Pas de system, intégré dans user     ⚠️ À ajouter

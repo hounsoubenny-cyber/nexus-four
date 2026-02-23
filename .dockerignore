@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+
+# Environnement
+venv/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Frontend source (on garde que build)
+frontend/REACT/src/
+frontend/REACT/public/
+frontend/REACT/node_modules/
+frontend/REACT/package*.json
+frontend/REACT/.gitignore
+
+# Logs
+*.log
+
+# MODÈLES LOURDS (volumes optionnels)
+conversation_app/chat_nexus/MODEL/qwen/*.gguf
+conversation_app/chat_nexus/MODEL/phi/*.gguf
+conversation_app/chat_nexus/MODEL/gemma/*.gguf
+
+# DOCS (volumes optionnels)
+conversation_app/chat_nexus/DOCS_IFRI/
+
+# Index Backup (on garde index principal)
+conversation_app/chat_nexus/Index_Backup/
+
+conversation_app/chat_nexus/index/
+
+# Cache (généré à l'exécution)
+conversation_app/var/cache/*.val
+conversation_app/var/cache/*/
+
+# Fichiers users (volumes)
+conversation_app/fastapi_mount/hub/imgs_profile/*
+!conversation_app/fastapi_mount/hub/imgs_profile/.gitkeep
+conversation_app/fastapi_mount/nexus_files/*
+conversation_app/fastapi_mount/profile_img/*
+
+# Temporaires
+*.tmp
+*.bak
+
+# Tests
+tests/
+test_*.py
+
+# Bash scripts (optionnel)
+conversation_app/chat_nexus/Bash/
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+README.md
+DOCKER_COMMANDS.md
