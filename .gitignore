@@ -7,7 +7,6 @@ conversation_app/chat_nexus/MODEL_DEMO/
 conversation_app/chat_nexus/EMBEDDING/
 
 # ===== INDEX FAISS =====
-conversation_app/chat_nexus/index/
 conversation_app/chat_nexus/Index_Backup/
 
 # ===== DOCUMENTS IFRI =====
