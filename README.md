@@ -573,7 +573,7 @@ Documentation interactive complète : **http://localhost:8000/docs** (Swagger UI
 
 | Méthode | Endpoint | Description |
 |---------|----------|-------------|
-| `POST` | `/hub` | Ajouter une compétence, un projet ou dss infos, voir ses compétences|
+| `POST` | `/hub` | Ajouter une compétence, un projet ou des infos, voir ses compétences|
 
 ### Messages (Chat)
 
