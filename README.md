@@ -560,7 +560,7 @@ Documentation interactive complète : **http://localhost:8000/docs** (Swagger UI
 
 | Méthode | Endpoint | Description |
 |---------|----------|-------------|
-| `POST` | `/chat` | Poser une question au RAG |
+| `POST` | `/chat_nexus` | Poser une question au RAG |
 
 
 ### Care (Bien-être)
