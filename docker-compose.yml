@@ -1,0 +1,94 @@
+# ============================================
+# NEXUS-FOUR v2.1 - Docker Compose
+# Compatible: Ubuntu, Fedora, Debian, Arch...
+# SELinux-ready (Fedora/RHEL) | Auto-init dossiers
+# ============================================
+#
+# UTILISATION:
+#   Démarrage normal  : docker compose up -d
+#   Build de l'index  : docker compose --profile index up index-builder
+#   Logs              : docker compose logs -f nexus
+#   Arrêt             : docker compose down
+#
+# NOTE SELinux (Fedora/RHEL):
+#   Le :z en fin de volume règle automatiquement les permissions SELinux.
+#   Sur Ubuntu/Debian, le :z est ignoré sans erreur.
+# ============================================
+
+services:
+  nexus:
+    image: hounsoubenny/nexus-four:v-1.0
+    container_name: nexus-four
+    user: root
+    ports:
+      - "8000:8000"
+
+    volumes:
+      # Le :z gère SELinux sur Fedora/RHEL, ignoré sur Ubuntu/Debian
+      - ${NEXUS_DATA:-~/nexus}/cache:/app/conversation_app/var/cache:z
+      - ${NEXUS_DATA:-~/nexus}/easyocr:/root/.EasyOCR:z
+      - ${NEXUS_DATA:-~/nexus}/uploads:/app/conversation_app/fastapi_mount:z
+      - ${NEXUS_DATA:-~/nexus}/docs:/app/conversation_app/chat_nexus/DOCS_IFRI:z
+      - ${NEXUS_DATA:-~/nexus}/index:/app/conversation_app/chat_nexus/index:z
+      - ${NEXUS_DATA:-~/nexus}/model:/app/conversation_app/chat_nexus/MODEL:z
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONPATH=/app
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    # Ce service attend que init-dirs soit terminé
+    depends_on:
+      init-dirs:
+        condition: service_completed_successfully
+
+  # ============================================
+  # Service d'initialisation des dossiers
+  # S'exécute une seule fois avant le démarrage
+  # Crée ~/nexus/* avec les bons droits (UID 1000)
+  # ============================================
+  init-dirs:
+    image: busybox
+    container_name: nexus-init
+    environment:
+      - HOST_UID=${UID:-1000}
+      - HOST_GID=${GID:-1000}
+    volumes:
+      - ${NEXUS_DATA:-~/nexus}:/nexus:z
+    command: >
+      sh -c "echo '>>> Initialisation des dossiers Nexus...' &&
+        mkdir -p /nexus/cache /nexus/easyocr /nexus/uploads/hub/imgs_profile /nexus/uploads/nexus_files /nexus/docs /nexus/index /nexus/model &&
+        chown -R ${HOST_UID:-1000}:${HOST_GID:-1000} /nexus &&
+        chmod -R 755 /nexus &&
+        echo '>>> Dossiers créés avec succès !'"
+    restart: "no"
+
+  # ============================================
+  # Builder d'index FAISS (à lancer manuellement)
+  # docker compose --profile index up index-builder
+  # ============================================
+  index-builder:
+    image: hounsoubenny/nexus-four:v-1.0
+    container_name: nexus-index-builder
+    user: root
+    profiles:
+      - index
+      - tools
+    volumes:
+      - ${NEXUS_DATA:-~/nexus}/docs:/app/conversation_app/chat_nexus/DOCS_IFRI:z
+      - ${NEXUS_DATA:-~/nexus}/index:/app/conversation_app/chat_nexus/index:z
+    environment:
+      - PYTHONPATH=/app
+      - HF_HOME=/app/conversation_app/chat_nexus/MODEL/huggingface
+      - PYTHONUNBUFFERED=1
+    command: python /app/conversation_app/chat_nexus/context_getter.py
+    restart: "no"

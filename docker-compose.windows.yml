@@ -1,0 +1,93 @@
+# ============================================
+# NEXUS-FOUR v2.1 - Docker Compose WINDOWS
+# Compatible: Windows 10/11 + Docker Desktop
+# ============================================
+#
+# UTILISATION:
+#   Démarrage normal  : docker compose -f docker-compose.windows.yml up -d
+#   Build de l'index  : docker compose -f docker-compose.windows.yml --profile index up index-builder
+#   Logs              : docker compose -f docker-compose.windows.yml logs -f nexus
+#   Arrêt             : docker compose -f docker-compose.windows.yml down
+#
+# NOTE: Pas de :z ici (SELinux n'existe pas sur Windows)
+#       Les chemins utilisent ${USERPROFILE} au lieu de ~
+# ============================================
+
+services:
+  nexus:
+    image: hounsoubenny/nexus-four:v-1.0
+    container_name: nexus-four
+    user: root
+    ports:
+      - "8000:8000"
+
+    volumes:
+      # Pas de :z sur Windows
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/cache:/app/conversation_app/var/cache
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/easyocr:/root/.EasyOCR
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/uploads:/app/conversation_app/fastapi_mount
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/docs:/app/conversation_app/chat_nexus/DOCS_IFRI
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/index:/app/conversation_app/chat_nexus/index
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/model:/app/conversation_app/chat_nexus/MODEL
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONPATH=/app
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    depends_on:
+      init-dirs:
+        condition: service_completed_successfully
+
+  # ============================================
+  # Initialisation des dossiers sur l'hôte Windows
+  # ============================================
+  init-dirs:
+    image: busybox
+    container_name: nexus-init
+    volumes:
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}:/nexus
+    command: >
+      sh -c "
+        echo '>>> Initialisation des dossiers Nexus...' &&
+        mkdir -p
+          /nexus/cache
+          /nexus/easyocr
+          /nexus/uploads/hub/imgs_profile
+          /nexus/uploads/nexus_files
+          /nexus/docs
+          /nexus/index
+          /nexus/model &&
+        echo '>>> Dossiers créés avec succès !'
+      "
+    restart: "no"
+
+  # ============================================
+  # Builder d'index FAISS (à lancer manuellement)
+  # docker compose -f docker-compose.windows.yml --profile index up index-builder
+  # ============================================
+  index-builder:
+    image: hounsoubenny/nexus-four:v-1.0
+    container_name: nexus-index-builder
+    user: root
+    profiles:
+      - index
+      - tools
+    volumes:
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/docs:/app/conversation_app/chat_nexus/DOCS_IFRI
+      - ${NEXUS_DATA:-${USERPROFILE}/nexus}/index:/app/conversation_app/chat_nexus/index
+    environment:
+      - PYTHONPATH=/app
+      - HF_HOME=/app/conversation_app/chat_nexus/MODEL/huggingface
+      - PYTHONUNBUFFERED=1
+    command: python /app/conversation_app/chat_nexus/context_getter.py
+    restart: "no"
