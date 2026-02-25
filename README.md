@@ -856,7 +856,7 @@ Si ton problème n'est pas listé ici :
 <td align="center">
 <img src="https://github.com/identicons/user2.png" width="100px;" alt="Léoncelle GBESSEMEEHLAN"/><br />
 <sub><b>Léoncelle GBESSEMEEHLAN</b></sub><br />
-<a href="#">GitHub</a> • <a href="mailto:leoncelle.gb@gmail.com">Email</a>
+<a href="https://github.com/luce1711.git">GitHub</a> • <a href="mailto:leoncelle.gb@gmail.com">Email</a>
 </td>
 <td align="center">
 <img src="https://github.com/identicons/user3.png" width="100px;" alt="ADEBOYE-SENAN Christ-Emile"/><br />
